@@ -43,7 +43,7 @@ tnpm start
 ```
 koa-weapp-demo
 ├── README.md
-├── app.js
+├── mini.js
 ├── controllers
 │   ├── index.js
 │   ├── login.js

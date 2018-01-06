@@ -1,0 +1,46 @@
+# node 项目 Travis CI 配置文件
+# edit by raoul1996
+# 项目使用语言以及版本
+language: node_js
+node_js:
+- '9'
+directories:
+- node_modules
+# 添加 ssh key，用于登陆 server，需要提前建立开发机和目标服务器之间的信任关系
+before_install:
+- mkdir -p  ~/.ssh/
+- openssl aes-256-cbc -K $encrypted_c4e2c44ab6bb_key -iv $encrypted_c4e2c44ab6bb_iv
+  -in id_rsa.enc -out ~/.ssh/id_rsa -d
+- chmod 600 ~/.ssh/id_rsa
+- echo -e "Host 123.207.252.230 \n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+# 安装依赖
+install:
+- npm install
+before_script:
+script:
+#- npm run build
+# 移除开发依赖
+- npm prune --production
+# 压缩项目
+- tar -jcf mini.tar.bz2 *
+# scp 到目标 server
+- scp mini.tar.bz2 ubuntu@123.207.252.230:~/
+# 移动到 mini 文件夹
+- ssh ubuntu@123.207.252.230 'mkdir -p /usr/share/nginx/html/mini && mv ./mini.tar.bz2 /usr/share/nginx/html/mini'
+# 解压并删除压缩包
+- ssh ubuntu@123.207.252.230 'cd /usr/share/nginx/html/mini && tar -jxf mini.tar.bz2 && rm -rf mini.tar.bz2'
+# 重启，让更改生效
+- ssh ubuntu@123.207.252.230 'pm2 stop session -f'
+- ssh ubuntu@123.207.252.230 'cd /usr/share/nginx/html/mini && npm run start'
+# 查看 pm2 的状态
+- ssh ubuntu@123.207.252.230 'pm2 show session'
+after_script:
+
+
+after_success:
+
+branches:
+  only:
+  - master
+env:
+  global:
